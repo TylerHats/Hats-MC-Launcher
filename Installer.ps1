@@ -24,17 +24,20 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
 
 # Script setup
 Clear-Host
+$ExePath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+$ExeDir = Split-Path -Path $ExePath
 $DesktopPath = [Environment]::GetFolderPath('Desktop')
 $AppDataPath = $Env:APPDATA
 $HMCPath = Join-Path -Path $AppDataPath -ChildPath '.HatsMC'
 $DirLogs = Join-Path -Path $HMCPath -ChildPath 'Logs'
 $DirBin = Join-Path -Path $HMCPath -ChildPath 'Bin'
+$DirDependencies = Join-Path -Path $DirBin -ChildPath 'Dependencies'
 $DirProfiles = Join-Path -Path $HMCPath -ChildPath 'Profiles'
 $DirEtc = Join-Path -Path $HMCPath -ChildPath 'Etc'
 $DirJava = Join-Path -Path $DirBin -ChildPath 'Java'
 $DirTemp = Join-Path -Path $DirEtc -ChildPath 'Temp'
 $LogPathName = 'HMCLInstallerLog.txt'
-$LogPath = Join-Path -Path $PSScriptRoot -ChildPath $logPathName
+$LogPath = Join-Path -Path $ExeDir -ChildPath $logPathName
 function Log-Message {
     param(
         [string]$message,
@@ -76,7 +79,8 @@ $Directories = @(
 	"$DirProfiles",
 	"$DirEtc",
 	"$DirJava",
-	"$DirTemp"
+	"$DirTemp",
+	"$DirDependencies"
 )
 foreach ($DirectoryPath in $Directories) {
     if (-not (Test-Path -Path $DirectoryPath)) {
@@ -96,4 +100,56 @@ Start-BitsTransfer -Source 'https://mc.hatsthings.com/wp-content/uploads/2025/01
 Log-Message "Extracting downloaded files..."
 Expand-Archive -Path "$DirTemp\PGit.zip" -DestinationPath "$DirEtc" >> $LogPath
 
-# Clone GitHub files with PortableGit
+# Clone GitHub files with PortableGit and only keep needed files
+Log-Message "Cloning GitHub files and cleaning up..."
+& "$DirEtc\PortableGit\Bin\Git.exe" clone --branch main --single-branch https://github.com/TylerHats/Hats-MC-Launcher $DirBin >> $LogPath
+$KeepFiles = @(
+	"Main.ps1",
+	"Functions.ps1",
+	"Uninstaller.ps1",
+	"HMCLIcon.ico"
+)
+$BinFiles = Get-ChildItem -Path $DirBin -File
+foreach ($File in $BinFiles) {
+	if ($File.Name -notin $KeepFiles) {
+		Remove-Item -Path $File.FullName -Force >> $LogPath
+	}
+}
+
+# Make main script executable
+Install-PackageProvider -Name NuGet -Force >> $LogPath
+Install-Module -Name PS2EXE -Scope CurrentUser -Force >> $LogPath
+Invoke-PS2EXE -InputFile "$DirBin\Main.ps1" -OutputFile "$DirBin\HatsMCLauncher.exe" -NoConsole -IconFile "$DirBin\HMCLIcon.ico" >> $LogPath
+
+# Make uninstall script executable and register program with Windows
+Invoke-PS2EXE -InputFile "$DirBin\Uninstaller.ps1" -OutputFile "$DirBin\Uninstall.exe" >> $LogPath
+$RegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Hats MC Launcher"
+New-Item -Path $RegPath -Force >> $LogPath
+Set-ItemProperty -Path $RegPath -Name "DisplayName" -Value "Hat's MC Launcher" >> $LogPath
+Set-ItemProperty -Path $RegPath -Name "DisplayIcon" -Value "$DirBin\HatsMCLauncher.exe" >> $LogPath
+Set-ItemProperty -Path $RegPath -Name "UninstallString" -Value "`"$DirBin\Uninstall.exe`"" >> $LogPath
+Set-ItemProperty -Path $RegPath -Name "DisplayVersion" -Value "0.1" >> $LogPath
+Set-ItemProperty -Path $RegPath -Name "Publisher" -Value "Hat's Things" >> $LogPath
+Set-ItemProperty -Path $RegPath -Name "InstallLocation" -Value "$HMCPath" >> $LogPath
+Set-ItemProperty -Path $RegPath -Name "NoModify" -Value 1 -Type DWORD >> $LogPath
+Set-ItemProperty -Path $RegPath -Name "NoRepair" -Value 1 -Type DWORD >> $LogPath
+$CurrentDate = (Get-Date).ToString("yyyyMMdd")
+Set-ItemProperty -Path $RegPath -Name "InstallDate" -Value "$CurrentDate" >> $LogPath
+$FolderSize = (Get-ChildItem -Path "$HMCPath" -Recurse | Measure-Object -Property Length -Sum).Sum
+Set-ItemProperty -Path $RegPath -Name "EstimatedSize" -Value $FolderSize -Type DWORD >> $LogPath
+
+# Create shortcuts if desired
+$DShort = Read-Host "Create program shortcut on the desktop? (y/N)"
+$SMShort = Read-Host"Create program shortcut in the start menu? (y/N)"
+$WshShell = New-Object -ComObject WScript.Shell >> $LogPath
+$shortcut = $WshShell.CreateShortcut("$DirBin\Hats MC Launcher.lnk") >> $LogPath
+$shortcut.TargetPath = "$DirBin\HatsMCLauncher.exe" >> $LogPath
+$shortcut.Save() >> $LogPath
+if ($DShort.ToLower() -in @("yes", "y")) {
+	Copy-Item -Path "$DirBin\Hats MC Launcher.lnk" -Destination "$DesktopPath\Hats MC Launcher.lnk" -Force >> $LogPath
+}
+if ($SMShort.ToLower() -in @("yes", "y")) {
+	$startMenuPath = [System.Environment]::GetFolderPath('StartMenu')
+	Copy-Item -Path "$DirBin\Hats MC Launcher.lnk" -Destination "$startMenuPath\Hats MC Launcher.lnk" -Force >> $LogPath
+}
+Read-Host "Installation complete, press any key to exit"
