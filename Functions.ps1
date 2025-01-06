@@ -1,4 +1,4 @@
-# Hat's MC Launcher - Functions - Tyler Hatfield - v0.1
+# Hat's MC Launcher - Functions - Tyler Hatfield - v0.2
 
 # Log-Message takes a string or command output and sends it both to the registered $logPath and the PS consol
 function Log-Message {

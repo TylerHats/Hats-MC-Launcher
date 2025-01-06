@@ -1,4 +1,4 @@
-# Hat's MC Launcher - Main - Tyler Hatfield - v0.1
+# Hat's MC Launcher - Main - Tyler Hatfield - v0.2
 
 # Elevation function
 $IsElevated = [System.Security.Principal.WindowsIdentity]::GetCurrent().Groups -match 'S-1-5-32-544'
@@ -10,17 +10,26 @@ if (-not $IsElevated) {
 
 # Script setup
 Clear-Host
+$ExePath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+$ExeDir = Split-Path -Path $ExePath
 $DesktopPath = [Environment]::GetFolderPath('Desktop')
 $AppDataPath = $Env:APPDATA
 $HMCPath = Join-Path -Path $AppDataPath -ChildPath '.HatsMC'
-$LogPathName = "HatsMCLauncherLog.txt"
-$LogFolder = Join-Path -Path $HMCPath -ChildPath 'Logs'
-$LogPath = Join-Path -Path $logFolder -ChildPath $logPathName
-$FunctionPath = Join-Path -Path $PSScriptRoot -ChildPath 'Functions.ps1'
-. "$FunctionPath"
+$DirLogs = Join-Path -Path $HMCPath -ChildPath 'Logs'
+$DirBin = Join-Path -Path $HMCPath -ChildPath 'Bin'
+$DirDependencies = Join-Path -Path $DirBin -ChildPath 'Dependencies'
+$DirProfiles = Join-Path -Path $HMCPath -ChildPath 'Profiles'
+$DirEtc = Join-Path -Path $HMCPath -ChildPath 'Etc'
+$DirJava = Join-Path -Path $DirBin -ChildPath 'Java'
+$DirTemp = Join-Path -Path $DirEtc -ChildPath 'Temp'
+$LogPathName = 'HMCLInstallerLog.txt'
+$LogPath = Join-Path -Path $DirLogs -ChildPath $logPathName
+$FunctionsPath = Join-Path -Path $DirBin -ChildPath 'Functions.ps1'
+. "$FunctionsPath"
 
-# Directory setup
-if (-not (Test-Path -Path $DirectoryPath)) {
-    # If it doesn't exist, create the directory
-    New-Item -ItemType Directory -Path $DirectoryPath >> $LogPath
-}
+# Prepare Windows form 
+Add-Type -AssemblyName System.Windows.Forms
+$form = New-Object System.Windows.Forms.Form
+$form.Text = 'Hat''s MC Launcher'
+$form.Size = New-Object System.Drawing.Size(800, 600)
+$form.StartPosition = 'CenterScreen'

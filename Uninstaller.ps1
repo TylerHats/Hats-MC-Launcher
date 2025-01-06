@@ -1,1 +1,1 @@
-# Hat's MC Launcher - Uninstaller - Tyler Hatfield - v0.1
+# Hat's MC Launcher - Uninstaller - Tyler Hatfield - v0.2
