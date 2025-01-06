@@ -1,4 +1,4 @@
-# Hat's MC Launcher - Main - Tyler Hatfield - v0.1
+# Hat's MC Launcher - Main - Tyler Hatfield - v0.2
 
 # Elevation function
 $IsElevated = [System.Security.Principal.WindowsIdentity]::GetCurrent().Groups -match 'S-1-5-32-544'
