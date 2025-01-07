@@ -1,4 +1,4 @@
-# Hat's MC Launcher - Uninstaller - Tyler Hatfield - v0.2
+# Hat's MC Launcher - Uninstaller - Tyler Hatfield - v0.3
 
 # Elevation function
 $IsElevated = ([System.Security.Principal.WindowsPrincipal] [System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -28,4 +28,7 @@ $StartMenuInt = [System.Environment]::GetFolderPath('StartMenu')
 $StartMenuPrograms = Join-Path -Path $StartMenuInt -ChildPath "Programs"
 $StartMenuApp = Join-Path -Path $StartMenuPrograms -ChildPath "Hats MC Launcher"
 
-$Uninstall = Write-Host "This script will uninstall the Hat's MC Launcher and remove related data.`nYou will be given an option to backup data like word saves. Continue? (y/N)"
+# Script start
+$Uninstall = Read-Host "This script will uninstall the Hat's MC Launcher and remove related data.`nYou will be given an option to backup data like word saves. Continue? (y/N)"
+If (-not ($Uninstall.ToLower() -in @("yes", "y"))) { exit }
+$Backup = Read-Host ""
