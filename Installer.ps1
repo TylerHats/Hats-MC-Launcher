@@ -1,4 +1,4 @@
-# Hat's MC Launcher - Installer - Tyler Hatfield - v0.2
+# Hat's MC Launcher - Installer - Tyler Hatfield - v0.3
 
 # Elevation function
 $IsElevated = ([System.Security.Principal.WindowsPrincipal] [System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -95,7 +95,7 @@ $Directories = @(
 Foreach ($DirectoryPath in $Directories) {
 	If (-not (Test-Path -Path $DirectoryPath)) {
 		# If the directory does not exist, create it and log the output
-		New-Item -ItemType Directory -Path $DirectoryPath >> $LogPath
+		New-Item -ItemType Directory -Path $DirectoryPath | Out-File -Append -FilePath $logPath
 	} Else {
 		# Log that the directory already exists
 		Log-Message "Directory already exists: $DirectoryPath"
@@ -105,11 +105,11 @@ Foreach ($DirectoryPath in $Directories) {
 # Download required files for setup
 Log-Message "Downloading files for setup..."
 Try {
-	Start-BitsTransfer -Source 'https://mc.hatsthings.com/wp-content/uploads/2025/01/PortableGit.zip' -Destination "$DirTemp\PGit.zip" >> $LogPath
+	Start-BitsTransfer -Source 'https://mc.hatsthings.com/wp-content/uploads/2025/01/PortableGit.zip' -Destination "$DirTemp\PGit.zip" | Out-File -Append -FilePath $logPath
 } Catch {
 	Log-Message "File download failed, retrying..." -level "Error"
 	Try {
-		Start-BitsTransfer -Source 'https://mc.hatsthings.com/wp-content/uploads/2025/01/PortableGit.zip' -Destination "$DirTemp\PGit.zip" >> $LogPath
+		Start-BitsTransfer -Source 'https://mc.hatsthings.com/wp-content/uploads/2025/01/PortableGit.zip' -Destination "$DirTemp\PGit.zip" | Out-File -Append -FilePath $logPath
 	} Catch {
 		Log-Message "File download failed again, please retry setup later."
 		Read-Host "Press any key to exit"
@@ -119,16 +119,16 @@ Try {
 
 # Extract files
 Log-Message "Extracting downloaded files..."
-Expand-Archive -Path "$DirTemp\PGit.zip" -DestinationPath "$DirEtc" -Force >> $LogPath
+Expand-Archive -Path "$DirTemp\PGit.zip" -DestinationPath "$DirEtc" -Force | Out-File -Append -FilePath $logPath
 
 # Clone GitHub files with PortableGit and only keep needed files
 Log-Message "Cloning GitHub files and cleaning up..."
 Try {
-	& "$DirEtc\PortableGit\Bin\Git.exe" clone --branch main --single-branch https://github.com/TylerHats/Hats-MC-Launcher $DirBin >> $LogPath
+	& "$DirEtc\PortableGit\Bin\Git.exe" clone --branch main --single-branch https://github.com/TylerHats/Hats-MC-Launcher $DirBin | Out-File -Append -FilePath $logPath
 } Catch {
 	Log-Message "Git clone failed, retrying..." -level "Error"
 	Try {
-		& "$DirEtc\PortableGit\Bin\Git.exe" clone --branch main --single-branch https://github.com/TylerHats/Hats-MC-Launcher $DirBin >> $LogPath
+		& "$DirEtc\PortableGit\Bin\Git.exe" clone --branch main --single-branch https://github.com/TylerHats/Hats-MC-Launcher $DirBin | Out-File -Append -FilePath $logPath
 	} Catch {
 		Log-Message "Git clone failed again, please retry setup later."
 		Read-Host "Press any key to exit"
@@ -145,7 +145,7 @@ $BinFiles = Get-ChildItem -Path $DirBin -File
 foreach ($File in $BinFiles) {
 	if ($File.Name -notin $KeepFiles) {
 		Try {
-			Remove-Item -Path $File.FullName -Force >> $LogPath
+			Remove-Item -Path $File.FullName -Force | Out-File -Append -FilePath $logPath
 		} Catch {
 			Log-Message "Failed to remove file: $($File.FullName)" -level "Error"
 		}
@@ -153,51 +153,51 @@ foreach ($File in $BinFiles) {
 }
 
 # Make main script executable
-Install-PackageProvider -Name NuGet -Force >> $LogPath
+Install-PackageProvider -Name NuGet -Force | Out-File -Append -FilePath $logPath
 Try {
-	Install-Module -Name PS2EXE -Scope CurrentUser -Force >> $LogPath
+	Install-Module -Name PS2EXE -Scope CurrentUser -Force | Out-File -Append -FilePath $logPath
 } Catch {
 	Log-Message "PS2EXE Failed to install, retrying..."
 	Try {
-		Install-Module -Name PS2EXE -Scope CurrentUser -Force >> $LogPath
+		Install-Module -Name PS2EXE -Scope CurrentUser -Force | Out-File -Append -FilePath $logPath
 	} Catch {
 		Log-Message "PS2EXE Failed to install again, please retry setup later."
 		Read-Host "Press any key to exit"
 		Exit
 	}
 }
-Invoke-PS2EXE -InputFile "$DirBin\Main.ps1" -OutputFile "$DirBin\HatsMCLauncher.exe" -NoConsole -IconFile "$DirBin\HMCLIcon.ico" >> $LogPath
+Invoke-PS2EXE -InputFile "$DirBin\Main.ps1" -OutputFile "$DirBin\HatsMCLauncher.exe" -NoConsole -IconFile "$DirBin\HMCLIcon.ico" | Out-File -Append -FilePath $logPath
 
 # Make uninstall script executable and register program with Windows
-Invoke-PS2EXE -InputFile "$DirBin\Uninstaller.ps1" -OutputFile "$DirBin\Uninstall.exe" >> $LogPath
+Invoke-PS2EXE -InputFile "$DirBin\Uninstaller.ps1" -OutputFile "$DirBin\Uninstall.exe" | Out-File -Append -FilePath $logPath
 $RegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Hats MC Launcher"
-New-Item -Path $RegPath -Force >> $LogPath
-Set-ItemProperty -Path $RegPath -Name "DisplayName" -Value "Hat's MC Launcher" >> $LogPath
-Set-ItemProperty -Path $RegPath -Name "DisplayIcon" -Value "$DirBin\HatsMCLauncher.exe" >> $LogPath
-Set-ItemProperty -Path $RegPath -Name "UninstallString" -Value "`"$DirBin\Uninstall.exe`"" >> $LogPath
-Set-ItemProperty -Path $RegPath -Name "DisplayVersion" -Value "0.1" >> $LogPath
-Set-ItemProperty -Path $RegPath -Name "Publisher" -Value "Hat's Things" >> $LogPath
-Set-ItemProperty -Path $RegPath -Name "InstallLocation" -Value "$HMCPath" >> $LogPath
-Set-ItemProperty -Path $RegPath -Name "NoModify" -Value 1 -Type DWORD >> $LogPath
-Set-ItemProperty -Path $RegPath -Name "NoRepair" -Value 1 -Type DWORD >> $LogPath
-Set-ItemProperty -Path $RegPath -Name "InstallDate" -Value "$CurrentDate" >> $LogPath
+New-Item -Path $RegPath -Force | Out-File -Append -FilePath $logPath
+Set-ItemProperty -Path $RegPath -Name "DisplayName" -Value "Hat's MC Launcher" | Out-File -Append -FilePath $logPath
+Set-ItemProperty -Path $RegPath -Name "DisplayIcon" -Value "$DirBin\HatsMCLauncher.exe" | Out-File -Append -FilePath $logPath
+Set-ItemProperty -Path $RegPath -Name "UninstallString" -Value "`"$DirBin\Uninstall.exe`"" | Out-File -Append -FilePath $logPath
+Set-ItemProperty -Path $RegPath -Name "DisplayVersion" -Value "0.1" | Out-File -Append -FilePath $logPath
+Set-ItemProperty -Path $RegPath -Name "Publisher" -Value "Hat's Things" | Out-File -Append -FilePath $logPath
+Set-ItemProperty -Path $RegPath -Name "InstallLocation" -Value "$HMCPath" | Out-File -Append -FilePath $logPath
+Set-ItemProperty -Path $RegPath -Name "NoModify" -Value 1 -Type DWORD | Out-File -Append -FilePath $logPath
+Set-ItemProperty -Path $RegPath -Name "NoRepair" -Value 1 -Type DWORD | Out-File -Append -FilePath $logPath
+Set-ItemProperty -Path $RegPath -Name "InstallDate" -Value "$CurrentDate" | Out-File -Append -FilePath $logPath
 $FolderSize = [math]::Floor((Get-ChildItem -Path "$HMCPath" -Recurse | Measure-Object -Property Length -Sum).Sum / 1KB)
-Set-ItemProperty -Path $RegPath -Name "EstimatedSize" -Value $FolderSize -Type DWORD >> $LogPath
+Set-ItemProperty -Path $RegPath -Name "EstimatedSize" -Value $FolderSize -Type DWORD | Out-File -Append -FilePath $logPath
 
 # Create shortcuts if desired
 $DShort = Read-Host "Create program shortcut on the desktop? (y/N)"
 $SMShort = Read-Host"Create program shortcut in the start menu? (y/N)"
-$WshShell = New-Object -ComObject WScript.Shell >> $LogPath
-$shortcut = $WshShell.CreateShortcut("$DirBin\Hats MC Launcher.lnk") >> $LogPath
-$shortcut.TargetPath = "$DirBin\HatsMCLauncher.exe" >> $LogPath
+$WshShell = New-Object -ComObject WScript.Shell | Out-File -Append -FilePath $logPath
+$shortcut = $WshShell.CreateShortcut("$DirBin\Hats MC Launcher.lnk") | Out-File -Append -FilePath $logPath
+$shortcut.TargetPath = "$DirBin\HatsMCLauncher.exe" | Out-File -Append -FilePath $logPath
 $shortcut.Save()
 if ($DShort.ToLower() -in @("yes", "y")) {
-	Copy-Item -Path "$DirBin\Hats MC Launcher.lnk" -Destination "$DesktopPath\Hats MC Launcher.lnk" -Force >> $LogPath
+	Copy-Item -Path "$DirBin\Hats MC Launcher.lnk" -Destination "$DesktopPath\Hats MC Launcher.lnk" -Force | Out-File -Append -FilePath $logPath
 }
 if ($SMShort.ToLower() -in @("yes", "y")) {
-	Copy-Item -Path "$DirBin\Hats MC Launcher.lnk" -Destination "$StartMenuApp\Hats MC Launcher.lnk" -Force >> $LogPath
+	Copy-Item -Path "$DirBin\Hats MC Launcher.lnk" -Destination "$StartMenuApp\Hats MC Launcher.lnk" -Force | Out-File -Append -FilePath $logPath
 }
 
 # Cleanup and closing notes
-Remove-Item -Path "$DirTemp\PGit.zip" -Force -ErrorAction SilentlyContinue >> $LogPath
+Remove-Item -Path "$DirTemp\PGit.zip" -Force -ErrorAction SilentlyContinue | Out-File -Append -FilePath $logPath
 Read-Host "Installation complete, press any key to exit"

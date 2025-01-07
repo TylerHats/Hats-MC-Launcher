@@ -1,6 +1,9 @@
-# Hat's MC Launcher - Functions - Tyler Hatfield - v0.2
+# Hat's MC Launcher - Functions - Tyler Hatfield - v0.3
 
-# Log-Message takes a string or command output and sends it both to the registered $logPath and the PS consol
+# Available Functions:
+# Log-Message (Adds time and level information and logs a message to the consol and to $LogPath)
+# GetRAMGB (Stores the system's installed RAM amount to $SystemRAM rounded to the nearest GB)
+
 function Log-Message {
     param(
         [string]$message,
@@ -11,4 +14,9 @@ function Log-Message {
     
     Write-Host $logMessage  # Output to console
     $logMessage | Out-File -FilePath $LogPath -Append  # Write to log
+}
+
+function GetRAMGB {
+	$totalRAMGB = [math]::Round((Get-WmiObject -Class Win32_ComputerSystem).TotalPhysicalMemory / 1GB)
+	$SystemRAM = [math]::Round($totalRAMGB)
 }

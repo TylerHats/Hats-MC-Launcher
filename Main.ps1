@@ -33,3 +33,4 @@ $form = New-Object System.Windows.Forms.Form
 $form.Text = 'Hat''s MC Launcher'
 $form.Size = New-Object System.Drawing.Size(800, 600)
 $form.StartPosition = 'CenterScreen'
+
