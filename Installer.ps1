@@ -1,4 +1,4 @@
-# Hat's MC Launcher - Installer - Tyler Hatfield - v0.3
+# Hat's MC Launcher - Installer - Tyler Hatfield - v0.4
 
 # Elevation function
 $IsElevated = ([System.Security.Principal.WindowsPrincipal] [System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -37,6 +37,7 @@ $DirProfiles = Join-Path -Path $HMCPath -ChildPath 'Profiles'
 $DirEtc = Join-Path -Path $HMCPath -ChildPath 'Etc'
 $DirJava = Join-Path -Path $DirBin -ChildPath 'Java'
 $DirTemp = Join-Path -Path $DirEtc -ChildPath 'Temp'
+$DirModpacks = Join-Path -Path $DirEtc -ChildPath 'Modpacks'
 $CurrentDate = Get-Date -Format "yyyyMMdd"
 $CurrentTime = Get-Date -Format "HHmmss"
 $LogPathName = "HMCLInstallerLog-$CurrentDate-$CurrentTime.txt"
@@ -88,6 +89,7 @@ $Directories = @(
 	"$DirEtc",
 	"$DirJava",
 	"$DirTemp",
+	"$DirModpacks",
 	"$DirDependencies",
 	"$StartMenuPrograms",
 	"$StartMenuApp"
