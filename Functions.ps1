@@ -66,5 +66,8 @@ function MakeMCProfile {
 }
 
 function InstallModpack {
-	#Needs setup to receive path to modpack zip file and setup based on the modpack zip file
+	param(
+		[string]$zipPath
+	)
+	
 }
